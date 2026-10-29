@@ -1,9 +1,11 @@
 import FolderIcon from '@cherrystudio/app-icons/icons/folder';
 import FolderCheckIcon from '@cherrystudio/app-icons/icons/folder-check';
+import Minimize2Icon from '@cherrystudio/app-icons/icons/minimize-2';
 import {
   composerContentGap,
   ContentState,
   getComposerKeyboardStickyOffset,
+  useToast,
 } from '@cherrystudio/ui/components';
 import { router, useIsPreview, useLocalSearchParams } from 'expo-router';
 import { type ComponentProps, useCallback, useState } from 'react';
@@ -43,10 +45,12 @@ import { AssistantMessageUsage, ChatEmptyState, ChatWorkspace } from './componen
 import { FileWorkspaceSheet } from './components/FileWorkspaceSheet';
 import { FullScreenLayerHost } from './components/FullScreenLayer';
 import { LocalRuntimeStatus } from './components/LocalRuntimeStatus';
+import { ReferenceGalleryPane } from './components/ReferenceGalleryPane/ReferenceGalleryPane';
 import { useChatComposerSession } from './hooks/useChatComposerSession';
 import { useSessionReadReceipt } from './hooks/useSessionReadReceipt';
 import {
   latestConversationImageResult,
+  useAgentChatClient,
   useAgentChatControls,
   useAgentChatDraftHandoff,
   useLocalConversation,
@@ -70,6 +74,8 @@ export function ChatScreen() {
 
 function LocalChatHeader(props: ComponentProps<typeof MainHeader>) {
   const { t } = useTranslation();
+  const { client } = useAgentChatClient();
+  const { toast } = useToast();
   const params = useLocalSearchParams<ChatRouteParamsInput>();
   const route = parseChatRoute(params);
   const target = route.status === 'ready' ? route.target : undefined;
@@ -88,6 +94,16 @@ function LocalChatHeader(props: ComponentProps<typeof MainHeader>) {
     setShownSelectionHandoff(selectionHandoff);
     if (selectionHandoff) setWorkspaceAddress(null);
   }
+  const handleManualCompact = useCallback(() => {
+    if (target?.kind !== 'session') {
+      toast.show({ label: t('chat.compaction.noActiveSession'), variant: 'danger' });
+      return;
+    }
+    toast.show({ label: t('chat.compaction.compacting') });
+    void client.compactSession(target.sessionId).catch(() => {
+      toast.show({ label: t('chat.compaction.failed'), variant: 'danger' });
+    });
+  }, [client, target, t, toast]);
   function openWorkspace() {
     if (!target) return;
     Keyboard.dismiss();
@@ -107,6 +123,18 @@ function LocalChatHeader(props: ComponentProps<typeof MainHeader>) {
         actions={
           target
             ? [
+                ...(target.kind === 'session'
+                  ? [
+                      {
+                        key: 'compact-session' as const,
+                        type: 'icon' as const,
+                        icon: Minimize2Icon,
+                        accessibilityLabel: t('chat.compaction.manualCompact'),
+                        testID: 'chat-compact-session',
+                        onPress: handleManualCompact,
+                      },
+                    ]
+                  : []),
                 {
                   key: 'file-workspace',
                   type: 'icon',
@@ -301,6 +329,13 @@ function ResolvedChatContent({ target }: { target: ChatTarget }) {
               </View>
             </ComposerDock>
           ) : null}
+          <ReferenceGalleryPane
+            composerHeight={composerHeight}
+            enabled={hasComposer && !isPreview}
+            key={
+              sessionId ?? (target.kind === 'draft' ? (target.workspaceDraftId ?? 'draft') : 'none')
+            }
+          />
         </ComposerDropArea>
       </McpAppConversationProvider>
     </ComposerSessionProvider>

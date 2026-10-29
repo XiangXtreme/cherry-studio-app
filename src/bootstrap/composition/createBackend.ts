@@ -62,6 +62,7 @@ import {
 } from '@/backend/services/providers/providerAvatarStorage';
 import type { ProviderRegistryUpdaterService } from '@/backend/services/providers/ProviderRegistryUpdaterService';
 import { providerRegistryUpdates } from '@/backend/services/providers/providerRegistryUpdates';
+import { createReferenceGalleryModule } from '@/backend/services/referenceGallery';
 import type { RemoteAgentRuntime, RemoteBackgroundExecution } from '@/backend/services/remoteAgent';
 import {
   createSkillMarketplace,
@@ -210,6 +211,7 @@ export function createBackend(
       auth: (id) => services.provider.getAuthConfig(id),
     },
   });
+  const referenceGallery = createReferenceGalleryModule();
   const paintings = createPaintingsModule({
     scopes: infrastructure.resourceScopes,
     db: { withWriteTx: (fn) => dbService.withWriteTx(fn) },
@@ -376,6 +378,7 @@ export function createBackend(
       plugins: createPluginsModule(services.mcpRuntime, services.mcpRuntime.pluginAuthorizations),
       profile,
       providers,
+      referenceGallery,
       skills,
       translation: createTranslationModule({
         ai: {

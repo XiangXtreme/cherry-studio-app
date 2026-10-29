@@ -90,6 +90,23 @@ multiple outputs remain optional candidates. Generate-only models pause automati
 block incompatible explicit images. The shared input strategy owns these rules. Effective references
 are submitted as file parts and stay separate from the text draft; text controls do not attach them.
 
+## Reference gallery
+
+`components/ReferenceGalleryPane/` adds a floating rail on the conversation column's trailing edge.
+Opening it slides a pane over the transcript and leaves the composer visible, so a reference can be
+picked and the request sent without leaving the page. Its two tabs are the built-in costume and pose
+galleries; `Backend.referenceGallery` reads their pinned catalog snapshots and downloads one image
+only when the user picks it. Neither publisher allows redistributing its images, so nothing is
+bundled, and the pane names its sources and their terms. See its README for geometry, material, and
+motion.
+
+Picking a tile toggles an ordinary composer attachment whose id is
+`reference-gallery:<source>:<id>` and whose file name carries the item's title; tapping it again
+removes the attachment, and removing it in the composer clears the tile. Attachments stay transient
+until send, so the message carries their `fileEntryId` and the Agent can pass them to its image
+tool. The pane adds no send or Agent behavior of its own. Four references are the ceiling, and the
+description switch inserts one localized prompt line, editable like any other draft text.
+
 ## Local and remote presentation
 
 `remote/RemoteChatScreen` keeps the `/remote` route, page frame, header and composer layout. It

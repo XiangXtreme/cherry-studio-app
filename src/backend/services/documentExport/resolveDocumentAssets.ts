@@ -1,5 +1,6 @@
 import { fetch } from 'expo/fetch';
 
+import { inspectImage } from '@/backend/utils/imageInspection';
 import type { DocumentExportIssue, ExportDocument } from '@/shared/contracts/documentExport';
 
 import { safeExportUrl } from './normalizeDocument';
@@ -85,62 +86,6 @@ async function fetchImage(value: string, signal: AbortSignal): Promise<Uint8Arra
     signal.removeEventListener('abort', abort);
     controller.abort();
   }
-}
-
-/** Inspect headers before any native decoder sees the source; only still PNG/JPEG are admitted. */
-export function inspectImage(bytes: Uint8Array): {
-  width: number;
-  height: number;
-  mediaType: string;
-} {
-  const view = new DataView(bytes.buffer, bytes.byteOffset, bytes.byteLength);
-  if (
-    bytes.length >= 33 &&
-    view.getUint32(0) === 0x89504e47 &&
-    view.getUint32(4) === 0x0d0a1a0a &&
-    view.getUint32(8) === 13 &&
-    view.getUint32(12) === 0x49484452
-  ) {
-    let position = 8;
-    let hasEnd = false;
-    while (position + 12 <= bytes.length) {
-      const size = view.getUint32(position);
-      const kind = view.getUint32(position + 4);
-      if (
-        position + size + 12 > bytes.length ||
-        kind === 0x6163544c ||
-        (position !== 8 && kind === 0x49484452)
-      )
-        throw new Error('Invalid or animated PNG');
-      if (kind === 0x49454e44) {
-        hasEnd = true;
-        break;
-      }
-      position += size + 12;
-    }
-    if (!hasEnd) throw new Error('Incomplete PNG');
-    return { width: view.getUint32(16), height: view.getUint32(20), mediaType: 'image/png' };
-  }
-  if (bytes.length >= 4 && view.getUint16(0) === 0xffd8) {
-    let position = 2;
-    while (position + 4 <= bytes.length) {
-      if (bytes[position++] !== 0xff) break;
-      while (bytes[position] === 0xff) position++;
-      const marker = bytes[position++];
-      if (marker === 0xd9 || marker === 0xda) break;
-      const size = view.getUint16(position);
-      if (size < 2 || position + size > bytes.length) break;
-      if ([0xc0, 0xc1, 0xc2].includes(marker) && size >= 8) {
-        return {
-          height: view.getUint16(position + 3),
-          width: view.getUint16(position + 5),
-          mediaType: 'image/jpeg',
-        };
-      }
-      position += size;
-    }
-  }
-  throw new Error('Unsupported image');
 }
 
 function encodeBase64(bytes: Uint8Array): string {

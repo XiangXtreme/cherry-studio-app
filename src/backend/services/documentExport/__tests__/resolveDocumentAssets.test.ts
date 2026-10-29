@@ -1,6 +1,6 @@
 import { fetch } from 'expo/fetch';
 
-import { inspectImage, resolveDocumentAssets } from '../resolveDocumentAssets';
+import { resolveDocumentAssets } from '../resolveDocumentAssets';
 
 jest.mock('expo/fetch', () => ({ fetch: jest.fn() }));
 
@@ -11,14 +11,6 @@ const png = () =>
     ),
     (character) => character.charCodeAt(0),
   );
-
-test('inspects dimensions without native decoding and rejects animated/active formats', () => {
-  expect(inspectImage(png())).toEqual({ width: 1, height: 1, mediaType: 'image/png' });
-  const animated = png();
-  new DataView(animated.buffer).setUint32(37, 0x6163544c);
-  expect(() => inspectImage(animated)).toThrow();
-  expect(() => inspectImage(new TextEncoder().encode('<svg onload="alert(1)"></svg>'))).toThrow();
-});
 
 test.each([
   { width: 100_000, height: 1 },

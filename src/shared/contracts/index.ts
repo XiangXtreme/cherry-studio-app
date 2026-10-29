@@ -10,6 +10,7 @@ export * from './paintings';
 export * from './permissions';
 export * from './profile';
 export * from './providers';
+export * from './referenceGallery';
 export * from './webSearch';
 export * from './plugins';
 export * from './skills';

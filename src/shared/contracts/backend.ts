@@ -13,6 +13,7 @@ import type { PermissionsModule } from './permissions';
 import type { PluginsModule } from './plugins';
 import type { ProfileModule } from './profile';
 import type { ProvidersModule } from './providers';
+import type { ReferenceGalleryModule } from './referenceGallery';
 import type { RemoteAgentModule } from './remoteAgent';
 import type { SkillsModule } from './skills';
 import type { SystemEntryModule } from './systemEntry';
@@ -37,6 +38,7 @@ export interface Backend {
   readonly plugins: PluginsModule;
   readonly profile: ProfileModule;
   readonly providers: ProvidersModule;
+  readonly referenceGallery: ReferenceGalleryModule;
   readonly skills: SkillsModule;
   readonly translation: TranslationModule;
   readonly webSearch: WebSearchModule;
