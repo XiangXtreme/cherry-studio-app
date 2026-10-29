@@ -19,9 +19,12 @@ config.watchFolders.push(path.resolve(__dirname, 'packages'));
 const legacyBrowserMapPackages =
   /\/node_modules\/(@libp2p|@chainsafe|@multiformats|@earendil-works|@anthropic-ai)\/[^/]+\//;
 const browserRedirect = (context, moduleName) => {
-  const match = legacyBrowserMapPackages.exec(context.originModulePath);
+  const normalizedOrigin = context.originModulePath.split('\\').join('/');
+  const match = legacyBrowserMapPackages.exec(normalizedOrigin);
   if (!match) return null;
-  const packageRoot = context.originModulePath.slice(0, match.index + match[0].length - 1);
+  const packageRoot = path.normalize(
+    context.originModulePath.slice(0, match.index + match[0].length - 1),
+  );
   let browser;
   try {
     browser = require(path.join(packageRoot, 'package.json')).browser;
@@ -29,11 +32,14 @@ const browserRedirect = (context, moduleName) => {
     return null;
   }
   if (typeof browser !== 'object' || browser === null) return null;
-  const key = moduleName.startsWith('.')
-    ? `./${path.relative(packageRoot, path.resolve(path.dirname(context.originModulePath), moduleName))}`
+  const targetPath = moduleName.startsWith('.')
+    ? path.resolve(path.dirname(context.originModulePath), moduleName)
     : moduleName;
-  const replacement = browser[key];
-  return typeof replacement === 'string' ? path.join(packageRoot, replacement) : null;
+  const rel = moduleName.startsWith('.')
+    ? `./${path.relative(packageRoot, targetPath).split('\\').join('/')}`
+    : moduleName;
+  const replacement = browser[rel] || browser[rel.replace(/^\.\//, '')];
+  return typeof replacement === 'string' ? path.resolve(packageRoot, replacement) : null;
 };
 
 config.resolver.resolveRequest = (context, moduleName, platform) => {

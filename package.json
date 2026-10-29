@@ -16,6 +16,7 @@
     }
   },
   "scripts": {
+    "build:apk:windows": "pwsh -NoProfile -File scripts/buildReleaseWindows.ps1",
     "build:local": "node --env-file-if-exists=.env --env-file-if-exists=.env.local --import tsx scripts/buildLocal.ts",
     "update:check": "node --import tsx scripts/publishUpdate.ts check",
     "update:preview": "node --import tsx scripts/publishUpdate.ts publish preview",
@@ -215,6 +216,7 @@
     "@babel/traverse": "^7.29.7",
     "@gorhom/bottom-sheet": "5.2.14",
     "@j178/prek": "^0.4.6",
+    "@noble/ciphers": "^2.4.0",
     "@react-native-async-storage/async-storage": "2.2.0",
     "@react-native-community/datetimepicker": "9.2.1",
     "@react-native/jest-preset": "0.88.0",

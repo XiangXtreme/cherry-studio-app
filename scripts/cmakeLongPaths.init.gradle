@@ -1,0 +1,17 @@
+// CMake refuses to configure a project whose object paths exceed 250 characters, and a pnpm
+// store under a deep checkout exceeds that before any source file is added. The Windows
+// toolchain handles longer paths once this guard is raised, so every Android module building
+// native code opts into the larger limit.
+//
+// Usage: gradlew assembleRelease --init-script scripts/cmakeLongPaths.init.gradle
+def objectPathMax = '4096'
+
+gradle.beforeProject { project ->
+  ['com.android.application', 'com.android.library'].each { pluginId ->
+    project.plugins.withId(pluginId) {
+      project.android.externalNativeBuild.cmake.arguments.add(
+        "-DCMAKE_OBJECT_PATH_MAX=${objectPathMax}"
+      )
+    }
+  }
+}

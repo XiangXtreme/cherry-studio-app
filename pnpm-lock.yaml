@@ -628,6 +628,9 @@ importers:
       '@j178/prek':
         specifier: ^0.4.6
         version: 0.4.6
+      '@noble/ciphers':
+        specifier: ^2.4.0
+        version: 2.4.0
       '@react-native-async-storage/async-storage':
         specifier: 2.2.0
         version: 2.2.0(react-native@0.88.0(patch_hash=d90df58511c01aab1e2ce4fa2e939afe917e558dd9803b888f5ebc2f692f6ff4)(@babel/core@7.29.7(supports-color@8.1.1))(@react-native/metro-config@0.88.0(@babel/core@7.29.7(supports-color@8.1.1))(supports-color@8.1.1))(@types/react@19.3.0)(react@19.3.0)(supports-color@8.1.1))

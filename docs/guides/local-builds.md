@@ -305,6 +305,49 @@ removing a plugin from app config does not clean its hooks out of an existing na
 Successful compilation alone does not verify production Sentry event delivery or source-map
 matching; those require a separate runtime check.
 
+## Windows Local Release APK
+
+`pnpm build:apk:windows` runs [`scripts/buildReleaseWindows.ps1`](../../scripts/buildReleaseWindows.ps1),
+the pinned Windows route for a release APK without EAS or an Expo login. It mirrors the checkout to a
+short build directory, installs dependencies there from the local store, builds, and copies the APK
+back to `android/app/build/outputs/apk/release/app-release.apk`.
+
+Three Windows constraints make this the only reliable local route:
+
+- **Path length.** CMake rejects object paths beyond 250 characters, and this checkout plus a pnpm
+  store exceeds that before any source file is added. The build therefore runs from a short mirror
+  (`-Mirror`, default `D:cherry-build`), which keeps its own `android/` project and Gradle state.
+  Only the mirror's first build configures the native modules; keep that directory between builds.
+- **Linker shadowing.** Visual Studio ships `lld.exe` (COFF flavour) inside
+  `...\VC\Tools\Llvm\...`. It rejects the NDK's ELF flags (`-z`, `--no-rosegment`,
+  `--no-undefined-version`), which makes the first CMake configure of any native module fail with
+  `lld: error: unknown argument: -z`. The script removes that directory from `PATH` so clang
+  resolves the NDK's own `ld.lld.exe`. Running Gradle by hand in the checkout hits this.
+- **JDK.** JDK 21 is the tested toolchain (`-Jdk`, default `D:\Program Files\Java\jdk-21`); JDK 23
+  resolves the same CMake projects with a host linker and fails the same way.
+
+`-SkipSync` builds the mirror as it is, and `-Fast` skips `lintVital` and enables Gradle's build
+cache while iterating on JavaScript:
+
+```powershell
+pwsh scripts/buildReleaseWindows.ps1 -SkipSync -Fast
+```
+
+JavaScript-only changes do not need a new APK: the preview and production packages include the EAS
+Update client, so publish an update instead (see [APK Update Distribution](#apk-update-distribution)
+and [Application Updates](./app-updates.md)). Rebuild only when native dependencies, app config
+plugins, or the update channel change.
+
+`scripts/publishUpdate.ts publish` refuses release targets outside GitHub Actions, so a production
+APK is updated by the OTA workflow rather than from a workstation; only `preview` publishes locally:
+
+```bash
+pnpm update:preview
+```
+
+For a fast JavaScript loop without publishing anything, run the development client with Metro
+(`pnpm dev`) and rebuild only the release package.
+
 ## Tablet Device Configuration
 
 `app.json` enables iPad support and all iPad orientations while retaining iPhone portrait behavior.
