@@ -46,7 +46,13 @@ export function createPaintingGenerationStrategy(model: Model | undefined) {
         ? 'image-required'
         : 'unavailable';
   // Only the model's declared reference limit applies; undeclared means unbounded.
-  const maxInputImages = withImages ? model?.imageGeneration?.modes[withImages]?.maxInputImages : 0;
+  // Relax reference limit to allow multi-image referencing (e.g. pose + character)
+  const declaredLimit = withImages ? model?.imageGeneration?.modes[withImages]?.maxInputImages : 0;
+  const maxInputImages = withImages
+    ? declaredLimit !== undefined
+      ? Math.max(declaredLimit, 10)
+      : undefined
+    : 0;
   const resolveMode = (imageCount: number): PaintingMode | undefined =>
     imageCount > 0 ? withImages : withoutImages;
   const resolveParameters = (imageCount: number) =>

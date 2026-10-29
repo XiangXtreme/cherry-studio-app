@@ -15,7 +15,7 @@ import * as z from 'zod';
 
 import type { PaintingGenerationStrategy } from '@/shared/utils/paintingGenerationStrategy';
 
-const MAX_INPUT_IMAGES = 1;
+const MAX_INPUT_IMAGES = 10;
 
 const GENERATE_IMAGE_PROMPT_FIELD = z
   .string()
@@ -150,7 +150,7 @@ export function buildGenerateImageToolDescription(strategy: PaintingGenerationSt
 
   if (strategy.acceptsImages) {
     instructions.push(
-      `Edit or use a user-uploaded image or an earlier generated image as a reference: pass its id in image_ids (attachment fileEntryId, generate_image result id, or artifact ref.fileEntryId). Never invent ids or ask the user for one; ask which image only when ambiguous, and ask to reattach one that is unavailable. Describe the changes and what to keep in prompt; never replace the reference with a text-only approximation. At most ${MAX_INPUT_IMAGES} reference image per call; if more are needed, ask which one. This tool reads the original itself; call read_file first only to inspect pixels no longer in context.`,
+      `Edit or use a user-uploaded image or an earlier generated image as a reference: pass its id in image_ids (attachment fileEntryId, generate_image result id, or artifact ref.fileEntryId). Never invent ids or ask the user for one; ask which image only when ambiguous, and ask to reattach one that is unavailable. Describe the changes and what to keep in prompt; never replace the reference with a text-only approximation. At most ${Math.max(MAX_INPUT_IMAGES, strategy.maxInputImages ?? MAX_INPUT_IMAGES)} reference images per call; if more are needed, ask which one. This tool reads the original itself; call read_file first only to inspect pixels no longer in context.`,
     );
     if (!strategy.canGenerate) {
       instructions.push('image_ids is required for every call with this drawing model.');
@@ -222,7 +222,7 @@ export function buildGenerateImageToolSchema(
     const imageIds = z
       .array(z.string().trim().min(1))
       .min(1)
-      .max(MAX_INPUT_IMAGES)
+      .max(Math.max(MAX_INPUT_IMAGES, strategy.maxInputImages ?? MAX_INPUT_IMAGES))
       .describe(
         `Reference image file entry id, not a message id, tool call id, or URL. ${strategy.canGenerate ? 'Omit only to generate a new image without a reference.' : 'Required for every call.'}`,
       );
