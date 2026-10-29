@@ -64,6 +64,8 @@ export interface PreferenceSchema {
   'chat.web_search.max_results': number;
   'chat.web_search.model_tools_preferred': boolean;
   'chat.web_search.provider_overrides': WebSearchProviderOverrides;
+  /** Private mirror root for the built-in reference galleries; empty reads publishers. */
+  'referenceGallery.mirror': string;
 
   'feature.paintings.default_model_id': string | null;
   'feature.quick_assistant.model_id': string | null;
@@ -109,6 +111,7 @@ export const PreferenceDefaults = {
   'chat.web_search.max_results': 5,
   'chat.web_search.model_tools_preferred': true,
   'chat.web_search.provider_overrides': {},
+  'referenceGallery.mirror': '',
 
   'feature.paintings.default_model_id': null,
   'feature.quick_assistant.model_id': null,
@@ -143,4 +146,5 @@ export const DEVICE_LOCAL_PREFERENCE_KEYS = [
   'app.user.id',
   'chat.background_reply.enabled',
   'chat.completion_notifications.enabled',
+  'referenceGallery.mirror',
 ] as const satisfies readonly PreferenceKeyType[];

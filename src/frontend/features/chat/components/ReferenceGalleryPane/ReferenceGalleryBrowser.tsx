@@ -1,10 +1,20 @@
 import XIcon from '@cherrystudio/app-icons/icons/x';
-import { Button, Chip, ContentState, SearchField, Switch, Tabs } from '@cherrystudio/ui/components';
+import {
+  Button,
+  Chip,
+  ContentState,
+  Input,
+  SearchField,
+  Switch,
+  Tabs,
+} from '@cherrystudio/ui/components';
 import { FlashList } from '@shopify/flash-list';
+import { useQueryClient } from '@tanstack/react-query';
 import { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Linking, Pressable, ScrollView, Text, View } from 'react-native';
 
+import { usePreference } from '@/frontend/data/hooks';
 import type {
   ReferenceGalleryEntry,
   ReferenceGallerySourceId,
@@ -39,6 +49,24 @@ export function ReferenceGalleryBrowser({ onClose }: { onClose: () => void }) {
   const [writeDescription, setWriteDescription] = useState(true);
   const catalog = useReferenceGalleryCatalog(source);
   const gallery = useReferenceGalleryAttachments();
+  const [mirror, setMirror] = usePreference('referenceGallery.mirror');
+  const queryClient = useQueryClient();
+  const [isMirrorOpen, setIsMirrorOpen] = useState(false);
+  const [mirrorDraft, setMirrorDraft] = useState(mirror);
+  const [mirrorError, setMirrorError] = useState<string>();
+
+  const applyMirror = async (value: string) => {
+    const trimmed = value.trim();
+    if (trimmed && !/^https:\/\/\S+$/i.test(trimmed)) {
+      setMirrorError(t('chat.referenceGallery.mirrorInvalid'));
+      return;
+    }
+    setMirrorError(undefined);
+    await setMirror(trimmed);
+    // Thumbnails are rebuilt from the mirror on read, so one refetch is enough.
+    await queryClient.invalidateQueries({ queryKey: ['reference-gallery'] });
+    setIsMirrorOpen(false);
+  };
 
   const entries = useMemo(() => catalog.data?.entries ?? [], [catalog.data]);
   const categories = useMemo(() => referenceGalleryCategories(entries), [entries]);
@@ -201,17 +229,56 @@ export function ReferenceGalleryBrowser({ onClose }: { onClose: () => void }) {
             {t('chat.referenceGallery.selectedCount', { count: gallery.attachedIds.size })}
           </Text>
         </View>
+        {isMirrorOpen ? (
+          <View className="gap-1.5">
+            <Input
+              accessibilityLabel={t('chat.referenceGallery.mirror')}
+              autoCapitalize="none"
+              autoCorrect={false}
+              onChangeText={setMirrorDraft}
+              placeholder={t('chat.referenceGallery.mirrorPlaceholder')}
+              value={mirrorDraft}
+            />
+            {mirrorError ? <Text className="text-xs text-danger">{mirrorError}</Text> : null}
+            <View className="flex-row items-center gap-2">
+              <Button onPress={() => void applyMirror(mirrorDraft)} size="sm">
+                <Button.Label>{t('chat.referenceGallery.mirrorSave')}</Button.Label>
+              </Button>
+              <Button onPress={() => void applyMirror('')} size="sm" variant="ghost">
+                <Button.Label>{t('chat.referenceGallery.mirrorClear')}</Button.Label>
+              </Button>
+            </View>
+            <Text className="text-[11px] leading-4 text-muted-foreground">
+              {t('chat.referenceGallery.mirrorDescription')}
+            </Text>
+          </View>
+        ) : null}
         <Button onPress={onClose} testID="reference-gallery-done">
           <Button.Label>{t('common.done')}</Button.Label>
         </Button>
-        <Pressable
-          accessibilityRole="link"
-          onPress={() => void Linking.openURL(SOURCE_SITES[source])}
-        >
-          <Text className="text-[11px] leading-4 text-muted-foreground">
-            {t('chat.referenceGallery.attribution')} · {t('chat.referenceGallery.terms')}
-          </Text>
-        </Pressable>
+        <View className="flex-row items-center justify-between gap-2">
+          <Pressable
+            accessibilityRole="button"
+            onPress={() => {
+              setMirrorDraft(mirror);
+              setMirrorError(undefined);
+              setIsMirrorOpen((open) => !open);
+            }}
+            testID="reference-gallery-mirror-toggle"
+          >
+            <Text className="text-[11px] text-muted-foreground">
+              {mirror ? t('chat.referenceGallery.mirrorActive') : t('chat.referenceGallery.mirror')}
+            </Text>
+          </Pressable>
+          <Pressable
+            accessibilityRole="link"
+            onPress={() => void Linking.openURL(SOURCE_SITES[source])}
+          >
+            <Text className="text-[11px] leading-4 text-muted-foreground">
+              {t('chat.referenceGallery.attribution')} · {t('chat.referenceGallery.terms')}
+            </Text>
+          </Pressable>
+        </View>
       </View>
     </View>
   );

@@ -4,6 +4,7 @@ import {
   referenceGalleryImageUrls,
   referenceGalleryMirrorBase,
   referenceGalleryThumbnailUrl,
+  normalizeReferenceGalleryMirror,
 } from '../sources';
 
 const MIRROR = 'https://refs.example.com/t/rotating-token/';
@@ -60,5 +61,29 @@ describe('reference gallery sources', () => {
     expect(referenceGalleryMirrorBase()).toBeUndefined();
     useMirror('not a url');
     expect(referenceGalleryMirrorBase()).toBeUndefined();
+  });
+
+  it('normalizes a stored mirror the same way as the build-time default', () => {
+    expect(normalizeReferenceGalleryMirror('  https://refs.example.com/t/token//  ')).toBe(
+      'https://refs.example.com/t/token',
+    );
+    expect(normalizeReferenceGalleryMirror('')).toBeUndefined();
+    expect(normalizeReferenceGalleryMirror('https://refs.example.com/')).toBe(
+      'https://refs.example.com',
+    );
+  });
+
+  it('takes an explicit mirror ahead of the build-time default', () => {
+    useMirror(MIRROR);
+    expect(
+      referenceGalleryCatalogUrls(REFERENCE_GALLERY_SOURCES.costume, 'https://runtime.example')[0],
+    ).toBe('https://runtime.example/costume/catalog.json');
+    expect(
+      referenceGalleryThumbnailUrl(
+        REFERENCE_GALLERY_SOURCES.pose,
+        'P001',
+        'https://runtime.example',
+      ),
+    ).toBe('https://runtime.example/pose/thumbs/P001.jpg');
   });
 });

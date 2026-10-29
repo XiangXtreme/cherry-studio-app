@@ -127,6 +127,26 @@ describe('reference gallery module', () => {
     expect(transfer.fetchReferenceBytes).not.toHaveBeenCalled();
   });
 
+  it('rebuilds thumbnails from the current mirror, even for a cached catalog', async () => {
+    const cache = memoryCache();
+    let mirror: string | undefined;
+    const gallery = createReferenceGalleryModule({
+      cache,
+      mirror: () => mirror,
+      transfer: fakeTransfer(),
+    });
+    const published = await gallery.loadCatalog('costume');
+    expect(published.entries[0]?.thumbUrl).toBe(
+      'https://ai-costume-gallery.pages.dev/thumbs/SPR-0001.webp',
+    );
+
+    mirror = 'https://refs.example.com/t/token';
+    const mirrored = await gallery.loadCatalog('costume');
+    expect(mirrored.entries[0]?.thumbUrl).toBe(
+      'https://refs.example.com/t/token/costume/thumbs/SPR-0001.webp',
+    );
+  });
+
   it('wraps a failed download', async () => {
     const gallery = createReferenceGalleryModule({
       cache: memoryCache(),

@@ -12,6 +12,8 @@ import {
   isReferenceGallerySourceId,
   REFERENCE_GALLERY_ID_PATTERN,
   REFERENCE_GALLERY_SOURCES,
+  referenceGalleryMirrorBase,
+  referenceGalleryThumbnailUrl,
 } from './sources';
 import { createReferenceGalleryTransfer, type ReferenceGalleryTransfer } from './transfer';
 
@@ -20,6 +22,8 @@ const CATALOG_TTL_MS = 7 * 24 * 60 * 60 * 1000;
 
 export type ReferenceGalleryModuleOverrides = {
   cache?: ReferenceGalleryCache;
+  /** Runtime mirror root; falls back to the build-time default. */
+  mirror?: () => string | undefined;
   transfer?: ReferenceGalleryTransfer;
   now?: () => number;
 };
@@ -33,8 +37,27 @@ export function createReferenceGalleryModule(
   overrides: ReferenceGalleryModuleOverrides = {},
 ): ReferenceGalleryModule {
   const cache = overrides.cache ?? createReferenceGalleryCache();
-  const transfer = overrides.transfer ?? createReferenceGalleryTransfer();
+  const mirror = overrides.mirror ?? referenceGalleryMirrorBase;
+  const transfer = overrides.transfer ?? createReferenceGalleryTransfer({ mirror: () => mirror() });
   const now = overrides.now ?? Date.now;
+
+  // A catalog snapshot outlives a mirror edit, so thumbnails are rebuilt from the
+  // current mirror on every read rather than trusted from the cached entry.
+  const withMirror = (catalog: ReferenceGalleryCatalog): ReferenceGalleryCatalog => {
+    const base = mirror();
+    if (!base) return catalog;
+    return {
+      ...catalog,
+      entries: catalog.entries.map((entry) => ({
+        ...entry,
+        thumbUrl: referenceGalleryThumbnailUrl(
+          REFERENCE_GALLERY_SOURCES[entry.source],
+          entry.id,
+          base,
+        ),
+      })),
+    };
+  };
   // A second tap on the same tile joins the running download instead of racing it.
   const downloads = new Map<string, Promise<ReferenceGalleryImage>>();
 
@@ -63,18 +86,18 @@ export function createReferenceGalleryModule(
   return {
     async loadCatalog(source, signal) {
       const cached = await cache.read(source);
-      if (cached && now() - cached.fetchedAt < CATALOG_TTL_MS) return cached;
+      if (cached && now() - cached.fetchedAt < CATALOG_TTL_MS) return withMirror(cached);
       try {
         const entries = parseReferenceGalleryPayload(
           source,
           await transfer.fetchCatalogPayload(source, signal),
         );
-        const catalog: ReferenceGalleryCatalog = { source, fetchedAt: now(), entries };
+        const catalog: ReferenceGalleryCatalog = withMirror({ source, fetchedAt: now(), entries });
         cache.write(catalog);
         return catalog;
       } catch (error) {
         // A stale snapshot still browses; it beats an empty panel.
-        if (cached) return cached;
+        if (cached) return withMirror(cached);
         throw asGalleryError(error, 'catalog-unavailable');
       }
     },

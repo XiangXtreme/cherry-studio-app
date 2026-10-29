@@ -211,7 +211,9 @@ export function createBackend(
       auth: (id) => services.provider.getAuthConfig(id),
     },
   });
-  const referenceGallery = createReferenceGalleryModule();
+  const referenceGallery = createReferenceGalleryModule({
+    mirror: () => services.preference.readCached('referenceGallery.mirror'),
+  });
   const paintings = createPaintingsModule({
     scopes: infrastructure.resourceScopes,
     db: { withWriteTx: (fn) => dbService.withWriteTx(fn) },

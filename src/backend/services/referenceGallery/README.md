@@ -60,12 +60,18 @@ would only cost upload time. The pose gallery has no WebP preview, so its PNG
 
 ## Self-hosted mirror (optional)
 
-`EXPO_PUBLIC_REFERENCE_GALLERY_MIRROR` points the module at a private mirror in
+The `referenceGallery.mirror` preference points the module at a private mirror in
 front of both publishers, for a deployment that runs its image endpoint next to
-a copy of the gallery files. It is read whenever a URL is built, so changing it
-needs no cache purge; a missing or non-HTTPS value is ignored, and every URL
-keeps the publisher behind it, so an unreachable mirror degrades to the public
-source rather than failing the pane.
+a copy of the gallery files. The pane's footer edits it; `EXPO_PUBLIC_REFERENCE_GALLERY_MIRROR`
+is only the default baked into the build.
+
+The value is resolved whenever a URL is built (`mirror` override → preference →
+build-time default), so changing it needs no cache purge. Thumbnails are rebuilt
+from the current mirror on every catalog read, which means a disk-cached snapshot
+still follows a mirror edit immediately. A missing or non-HTTPS value is ignored,
+and every URL keeps the publisher behind it, so an unreachable mirror degrades to
+the public source rather than failing the pane. The preference is device-local and
+never enters a backup restore.
 
 The mirror owns three paths per source, keyed by the catalog's own ids:
 

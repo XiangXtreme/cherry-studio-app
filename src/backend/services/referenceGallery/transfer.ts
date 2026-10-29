@@ -9,6 +9,7 @@ import {
   REFERENCE_GALLERY_SOURCES,
   referenceGalleryCatalogUrls,
   referenceGalleryImageUrls,
+  referenceGalleryMirrorBase,
   splitPublisherUrl,
 } from './sources';
 
@@ -56,12 +57,15 @@ async function requestBytes(
   return new Uint8Array(response.data);
 }
 
-export function createReferenceGalleryTransfer(): ReferenceGalleryTransfer {
+export function createReferenceGalleryTransfer(
+  options: { mirror?: () => string | undefined } = {},
+): ReferenceGalleryTransfer {
+  const mirror = options.mirror ?? referenceGalleryMirrorBase;
   return {
     async fetchCatalogPayload(sourceId, signal) {
       const source = REFERENCE_GALLERY_SOURCES[sourceId];
       let cause: unknown;
-      for (const url of referenceGalleryCatalogUrls(source)) {
+      for (const url of referenceGalleryCatalogUrls(source, mirror())) {
         try {
           const bytes = await requestBytes(url, {
             maxBytes: MAX_CATALOG_BYTES,
@@ -92,7 +96,7 @@ export function createReferenceGalleryTransfer(): ReferenceGalleryTransfer {
     async fetchReferenceBytes(sourceId, id, signal) {
       const source = REFERENCE_GALLERY_SOURCES[sourceId];
       let cause: unknown;
-      for (const url of referenceGalleryImageUrls(source, id)) {
+      for (const url of referenceGalleryImageUrls(source, id, mirror())) {
         try {
           const bytes = await requestBytes(url, {
             maxBytes: MAX_IMAGE_BYTES,
