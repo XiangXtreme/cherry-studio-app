@@ -1,4 +1,5 @@
 import BoxesIcon from '@cherrystudio/app-icons/icons/boxes';
+import Minimize2Icon from '@cherrystudio/app-icons/icons/minimize-2';
 import ToolCaseIcon from '@cherrystudio/app-icons/icons/tool-case';
 import { Composer, Image, useToast } from '@cherrystudio/ui/components';
 import { type RefObject, useState } from 'react';
@@ -19,12 +20,14 @@ export function ChatInputMenu({
   onPickPlugins,
   onPickPrompts,
   onPickSkills,
+  onCompactSession,
   triggerRef,
 }: {
   media?: 'all' | 'images';
   onPickPlugins?: () => void;
   onPickPrompts?: () => void;
   onPickSkills?: () => void;
+  onCompactSession?: () => void;
   triggerRef: RefObject<ViewInstance | null>;
 }) {
   const { t } = useTranslation();
@@ -72,6 +75,14 @@ export function ChatInputMenu({
             label={t('skills.title')}
             onPress={onPickSkills}
             testID="chat-composer-skills"
+          />
+        ) : null}
+        {onCompactSession ? (
+          <Composer.Menu.Item
+            icon={<Minimize2Icon className="size-5 text-foreground" />}
+            label={t('chat.compaction.manualCompact')}
+            onPress={onCompactSession}
+            testID="chat-composer-compact"
           />
         ) : null}
       </ComposerMenu>

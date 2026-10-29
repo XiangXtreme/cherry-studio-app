@@ -326,6 +326,10 @@ export class AgentSessionChatClient {
     await this.protocol.deleteTurn({ sessionId, turnId });
   }
 
+  async compactSession(sessionId: string, instructions?: string): Promise<void> {
+    await this.protocol.compactSession?.({ sessionId, instructions });
+  }
+
   async submitMessage(input: AgentSubmitMessageInput) {
     const { sessionId } = input;
     const entry = this.getEntry(sessionId);

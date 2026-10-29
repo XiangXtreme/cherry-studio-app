@@ -1,3 +1,4 @@
+import { useToast } from '@cherrystudio/ui/components';
 import { useCallback, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useWindowDimensions, View, type ViewInstance } from 'react-native';
@@ -35,7 +36,11 @@ import type { UniqueModelId } from '@/shared/data/types/model';
 import type { SkillAction } from '@/shared/data/types/skill';
 import { isImageGenerationModel, isTextGenerationModel } from '@/shared/utils/modelPurpose';
 
-import { type useAgentChatControls, useAgentChatImageResult } from '../../runtime';
+import {
+  type useAgentChatControls,
+  useAgentChatClient,
+  useAgentChatImageResult,
+} from '../../runtime';
 import { ChatInputAccessories, ChatInputComposer, ChatInputSurface } from './ChatInputSurface';
 import { ChatInputEffortOverlay } from './components/ChatInputEffortOverlay';
 import { ChatInputMenu } from './components/ChatInputMenu';
@@ -178,6 +183,7 @@ export function ChatInput({
           />
         ) : (
           <TextChatInput
+            sessionId={sessionId}
             mode={mode}
             agentId={agentId}
             skillAction={skillAction}
@@ -201,6 +207,7 @@ export function ChatInput({
 }
 
 function TextChatInput({
+  sessionId,
   mode,
   agentId,
   agentModelAnswersInParallel,
@@ -216,7 +223,7 @@ function TextChatInput({
   selectedModelItem,
   selectModel,
   setReplyModels,
-}: Omit<ChatInputProps, 'sessionId'> & {
+}: ChatInputProps & {
   mode: AgentMode;
   skillAction?: SkillAction;
   providerSetupReturnTo: string;
@@ -234,11 +241,25 @@ function TextChatInput({
   setReplyModels: (models: readonly UniqueModelId[] | null) => void;
 }) {
   const { t } = useTranslation();
+  const { client } = useAgentChatClient();
+  const { toast } = useToast();
   const { cancel, canSend, isApprovalPending, isBusy, sendMessage } = controls;
   const mcpApps = useMcpAppConversation();
   const openProviderSetup = useOpenProviderSetup(providerSetupReturnTo);
   const isParallel = replyModels !== null;
   const { isReasoningEffortSelected, reasoningEffort, selectReasoningEffort } = reasoningSelection;
+
+  const handleCompactSession = useCallback(() => {
+    if (!sessionId) {
+      toast.show({ label: t('chat.compaction.noActiveSession'), variant: 'danger' });
+      return;
+    }
+    toast.show({ label: t('chat.compaction.compacting') });
+    void client.compactSession(sessionId).catch((err: unknown) => {
+      logger.warn('Manual compactSession failed', err as Error);
+      toast.show({ label: t('chat.compaction.failed'), variant: 'danger' });
+    });
+  }, [client, sessionId, t, toast]);
   // One picker at a time; each closes only itself, so a late close never hides the next one.
   const [openPicker, setOpenPicker] = useState<ChatInputPicker | null>(null);
   const prompts = useChatInputMcpPrompts(mode === 'standard' ? agentId : undefined);
@@ -441,6 +462,7 @@ function TextChatInput({
                               ? () => setOpenPicker('prompt')
                               : undefined
                           }
+                          onCompactSession={handleCompactSession}
                           triggerRef={pluginMenuRef}
                         />
                       }

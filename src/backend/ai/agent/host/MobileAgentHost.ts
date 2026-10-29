@@ -81,6 +81,8 @@ export class MobileAgentHost extends BaseService implements AgentProtocol {
   selectMessage: AgentProtocol['selectMessage'] = (input) => this.host.selectMessage(input);
   deleteTurn: AgentProtocol['deleteTurn'] = (input) => this.host.deleteTurn(input);
   deleteSession: AgentProtocol['deleteSession'] = (input) => this.host.deleteSession(input);
+  compactSession = (input: Parameters<NonNullable<AgentProtocol['compactSession']>>[0]) =>
+    this.host.compactSession(input);
   renameSession: AgentProtocol['renameSession'] = (input) => this.host.renameSession(input);
   cancelTurn: AgentProtocol['cancelTurn'] = (input) => this.host.cancelTurn(input);
   cancelQueuedInput: AgentProtocol['cancelQueuedInput'] = (input) =>

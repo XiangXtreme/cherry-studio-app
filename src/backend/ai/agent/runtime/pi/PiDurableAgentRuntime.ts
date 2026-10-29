@@ -613,6 +613,10 @@ export class PiDurableAgentRuntime implements DurableAgentRuntime {
     await this.requireRuntime().stop(laneKey(lane));
   }
 
+  async compact(lane: RuntimeLane, instructions?: string) {
+    await this.requireRuntime().compact(laneKey(lane), instructions);
+  }
+
   async discardConversation(lane: RuntimeLane) {
     const runtime = this.requireRuntime();
     const key = laneKey(lane);

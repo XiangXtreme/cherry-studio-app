@@ -43,6 +43,7 @@ export interface AgentProtocol {
 
   renameSession(input: { sessionId: string; name: string }): Promise<AgentSessionView>;
   deleteSession(input: { sessionId: string }): Promise<void>;
+  compactSession?(input: { sessionId: string; instructions?: string }): Promise<void>;
 
   /** Creates the durable Session only when its first submission is admitted. */
   startSession(input: AgentStartSessionInput): Promise<AgentSessionView>;

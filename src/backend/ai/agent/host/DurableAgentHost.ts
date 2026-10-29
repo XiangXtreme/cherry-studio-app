@@ -1120,6 +1120,13 @@ export class DurableAgentHost implements AgentProtocol {
     }
   }
 
+  async compactSession(input: Parameters<NonNullable<AgentProtocol['compactSession']>>[0]) {
+    const { sessionId, instructions } = input;
+    if (!this.accepting) fail('EXECUTION_UNAVAILABLE', 'The Agent Host is not ready.');
+    const lane = runtimeLane(sessionId, 0);
+    await this.conversations.compact?.(lane, instructions);
+  }
+
   /** Retires every working copy of a Session; Cherry history stays the source of truth. */
   private async detachConversation(sessionId: string) {
     for (const lane of await this.sessionLanes(sessionId)) await this.detachLane(lane);

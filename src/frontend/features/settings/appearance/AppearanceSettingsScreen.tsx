@@ -23,6 +23,7 @@ export default function AppearanceSettingsScreen() {
   const [isWatermarkEnabled, setIsWatermarkEnabled] = usePreference(
     'file.export.watermark_enabled',
   );
+  const [isCompactionEnabled, setIsCompactionEnabled] = usePreference('chat.compaction.enabled');
   const normalizedFontSizeStep = normalizeFontSizeStep(fontSizeStep);
   const settingPreferences = useSettingPreferences();
   const languageLabel = settingPreferences.language.options.find(
@@ -32,6 +33,12 @@ export default function AppearanceSettingsScreen() {
   const changeWatermark = (value: boolean) => {
     void setIsWatermarkEnabled(value).catch(() => {
       toast.show({ label: t('settings.exportWatermark.saveFailed'), variant: 'danger' });
+    });
+  };
+
+  const changeCompaction = (value: boolean) => {
+    void setIsCompactionEnabled(value).catch(() => {
+      toast.show({ label: t('settings.chat.compaction.saveFailed'), variant: 'danger' });
     });
   };
 
@@ -71,6 +78,13 @@ export default function AppearanceSettingsScreen() {
         </Section>
 
         <Section>
+          <Section.SwitchItem
+            label={t('settings.chat.compaction.title')}
+            description={t('settings.chat.compaction.description')}
+            onValueChange={changeCompaction}
+            testID="settings-chat-compaction"
+            value={isCompactionEnabled}
+          />
           <Section.SwitchItem
             label={t('settings.exportWatermark.title')}
             onValueChange={changeWatermark}
