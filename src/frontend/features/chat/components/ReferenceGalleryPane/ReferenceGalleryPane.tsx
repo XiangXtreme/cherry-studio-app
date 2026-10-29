@@ -80,8 +80,8 @@ export function ReferenceGalleryPane({
 
   const pan = Gesture.Pan()
     .enabled(!isReducedMotion)
-    .activeOffsetX([12, 10000])
-    .failOffsetY([-12, 12])
+    .activeOffsetX([8, 10000])
+    .failOffsetY([-24, 24])
     .onUpdate((event) => {
       'worklet';
       if (paneWidth <= 0) return;
@@ -141,24 +141,33 @@ export function ReferenceGalleryPane({
       ) : null}
 
       {isMounted ? (
-        <GestureDetector gesture={pan}>
-          <Animated.View
-            accessibilityViewIsModal={isOpen}
-            className={cn(
-              'absolute inset-y-0 right-0 overflow-hidden rounded-l-4xl border-l border-border-subtle shadow-2xl shadow-constant-black/25',
-              Platform.OS === 'ios' ? 'bg-popover/45' : 'bg-popover/97',
-            )}
-            importantForAccessibility={isOpen ? 'auto' : 'no-hide-descendants'}
-            pointerEvents={isOpen ? 'auto' : 'none'}
-            style={[panelStyle, { width: paneWidth }]}
-            testID="reference-gallery-pane"
-          >
-            {Platform.OS === 'ios' ? (
-              <BlurView intensity={40} style={StyleSheet.absoluteFill} tint="systemMaterial" />
-            ) : null}
-            <ReferenceGalleryBrowser onClose={close} />
-          </Animated.View>
-        </GestureDetector>
+        <Animated.View
+          accessibilityViewIsModal={isOpen}
+          className={cn(
+            'absolute inset-y-0 right-0 overflow-hidden rounded-l-4xl border-l border-border-subtle shadow-2xl shadow-constant-black/25',
+            Platform.OS === 'ios' ? 'bg-popover/45' : 'bg-popover/97',
+          )}
+          importantForAccessibility={isOpen ? 'auto' : 'no-hide-descendants'}
+          pointerEvents={isOpen ? 'auto' : 'none'}
+          style={[panelStyle, { width: paneWidth }]}
+          testID="reference-gallery-pane"
+        >
+          {Platform.OS === 'ios' ? (
+            <BlurView intensity={40} style={StyleSheet.absoluteFill} tint="systemMaterial" />
+          ) : null}
+          <ReferenceGalleryBrowser onClose={close} />
+          {/* The only drag surface: the grid keeps its vertical scroll. */}
+          <GestureDetector gesture={pan}>
+            <View
+              accessible={false}
+              className="absolute inset-y-0 left-0 z-10 w-3 items-center justify-center"
+              hitSlop={{ left: 8, right: 8, top: 32, bottom: 32 }}
+              testID="reference-gallery-grip"
+            >
+              <View className="h-10 w-1 rounded-full bg-border" />
+            </View>
+          </GestureDetector>
+        </Animated.View>
       ) : null}
     </View>
   );
