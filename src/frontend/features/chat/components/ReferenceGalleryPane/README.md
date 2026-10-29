@@ -24,7 +24,7 @@ stays visible and usable, so picking a reference and sending are one flow.
 | --- | --- | --- | --- |
 | Open | `translateX` from the pane width to 0, `duration.base` + `easing.settle`; scrim opacity `duration.fast` | The rail or back reverses from the current value | Snaps to the end state |
 | Close | The reverse; a released drag continues from where it stopped | A new drag or action takes over | Snaps to the end state |
-| Edge drag | A horizontal pan past 12 pt, failing on vertical movement so the grid still scrolls; it drives the same progress 1:1 and closes past a quarter of the width or a decisive flick | The latest gesture wins | Drag is unavailable; the close action and strip still work |
+| Grip drag | A horizontal pan on the 12 pt grip at the panel's leading edge; it drives the same progress 1:1 and closes past a quarter of the width or a decisive flick. The grid keeps its vertical scroll because no pan covers the content | The latest gesture wins | Drag is unavailable; the close action and strip still work |
 
 ## Material
 

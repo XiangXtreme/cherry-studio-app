@@ -68,10 +68,12 @@ is only the default baked into the build.
 The value is resolved whenever a URL is built (`mirror` override → preference →
 build-time default), so changing it needs no cache purge. Thumbnails are rebuilt
 from the current mirror on every catalog read, which means a disk-cached snapshot
-still follows a mirror edit immediately. A missing or non-HTTPS value is ignored,
-and every URL keeps the publisher behind it, so an unreachable mirror degrades to
-the public source rather than failing the pane. The preference is device-local and
-never enters a backup restore.
+still follows a mirror edit immediately. A missing or non-HTTPS value is ignored.
+The catalog and reference downloads keep the publisher behind the mirror and try
+the next candidate on failure, so an unreachable mirror degrades to the public
+source rather than failing the pane. Thumbnails render from a single URL, so a
+broken mirror shows placeholder tiles until it is cleared or fixed. The preference
+is device-local and never enters a backup restore.
 
 The mirror owns three paths per source, keyed by the catalog's own ids:
 
